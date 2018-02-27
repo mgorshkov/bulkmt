@@ -42,13 +42,22 @@ protected:
     CommandProcessors mNextCommandProcessors;
 };
 
-template <typename P>
+template <typename Processor>
 class ThreadedCommandProcessor : public CommandProcessor
 {
 public:
     ThreadedCommandProcessor(const std::string& aName)
         : mInternalProcessor(aName)
+        , mName(aName)
     {
+#ifdef DEBUG_PRINT
+        std::cout << "Thread " << mName << " started." << std::endl;
+#endif
+    }
+
+    ~ThreadedCommandProcessor()
+    {
+        std::cout << "Thread: " << mName << ", block counter: " << mBlockCounter << ", command counter: " << mCommandCounter << std::endl;
     }
 
     void StartBlock() override
@@ -56,6 +65,10 @@ public:
         ++mBlockCounter;
     }
 
+    void FinishBlock() override
+    {
+        --mBlockCounter;
+    }
 
     void ProcessCommand(const Command& command) override
     {
@@ -69,10 +82,15 @@ public:
 
     void Stop()
     {
-        mDone = false;
+#ifdef DEBUG_PRINT
+        std::cout << "Thread " << mName << ": stopping." << std::endl;
+#endif
+        mDone = true;
+        mCond.notify_all();
         mThread.join();
-
-        std::cout << "Block counter: " << mBlockCounter << std::endl << ", command counter: " << mCommandCounter << std::endl;
+#ifdef DEBUG_PRINT
+        std::cout << "Thread " << mName << ": stopped." << std::endl;
+#endif
     }
 
 private:
@@ -82,23 +100,36 @@ private:
     std::condition_variable mCond;
     std::mutex mMutex;
     std::atomic<bool> mDone{false};
-    P mInternalProcessor;
+    Processor mInternalProcessor;
+    std::string mName;
 
     std::thread mThread{
         [&]()
         {
             while (!mDone)
             {
+#ifdef DEBUG_PRINT
+                std::cout << "Thread " << mName << ": before unique_lock." << std::endl;
+#endif
                 std::unique_lock<std::mutex> lk(mMutex);
+#ifdef DEBUG_PRINT
+                std::cout << "Thread " << mName << ": after unique_lock." << std::endl;
+#endif
                 mCond.wait(lk,
                     [&]()
                     {
-                        return !mQueue.empty();
+                        return !mQueue.empty() || mDone;
                     });
+#ifdef DEBUG_PRINT
+                std::cout << "Thread " << mName << ": after wait." << std::endl;
+#endif                
                 auto command = mQueue.front();
                 mQueue.pop();
                 lk.unlock();
                 mInternalProcessor.ProcessCommand(command);
+#ifdef DEBUG_PRINT
+                std::cout << "Thread " << mName << ": after process command." << std::endl;
+#endif                
             }
         }
     };
@@ -112,14 +143,21 @@ public:
     {
     }
 
+    ~ConsoleInput()
+    {
+        std::cout << "Thread: main, block counter: " << mBlockCounter << ", command counter: " << mCommandCounter << ", line counter: " << mLineCounter << std::endl;
+    }
+
     void ProcessCommand(const Command& command) override
     {
+        ++mLineCounter;
         if (!mNextCommandProcessors.empty())
         {
             if (command.Text == "{")
             {
                 if (++mBlockDepth > 0)
                 {
+                    ++mBlockCounter;
                     for (auto nextCommandProcessor : mNextCommandProcessors)
                         nextCommandProcessor->StartBlock();
                 }
@@ -128,12 +166,14 @@ public:
             {
                 if (--mBlockDepth == 0)
                 {
+                    --mBlockCounter;
                     for (auto nextCommandProcessor : mNextCommandProcessors)
                         nextCommandProcessor->FinishBlock();
                 }
             }
             else
             {
+                ++mCommandCounter;
                 for (auto nextCommandProcessor : mNextCommandProcessors)
                     nextCommandProcessor->ProcessCommand(command);
             }
@@ -141,6 +181,7 @@ public:
     }
 
 private:
+    int mLineCounter{0};
     int mBlockCounter{0};
     int mCommandCounter{0};
     int mBlockDepth{0};
