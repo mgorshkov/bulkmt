@@ -15,10 +15,30 @@
  * @brief Multithreaded batch command processor.
  */
 
+using Timestamp = std::chrono::system_clock::time_point;
+
 struct Command
 {
-    std::string Text;
-    std::chrono::system_clock::time_point Timestamp;
+    std::string mText;
+    Timestamp mTimestamp;
+};
+
+struct CommandBatch
+{
+    std::vector<Command> mCommands;
+    Timestamp mTimestamp;
+
+    size_t Size() const
+    {
+        return mCommands.size();
+    }
+};
+
+struct Counters
+{
+    int mLineCounter{0};
+    int mBlockCounter{0};
+    int mCommandCounter{0};
 };
 
 class CommandProcessor;
@@ -36,11 +56,30 @@ public:
 
     virtual void StartBlock() {}
     virtual void FinishBlock() {}
-    virtual void ProcessCommand(const Command& command) = 0;
+    virtual void ProcessCommand(const Command& command) {}
+    virtual void ProcessBatch(const CommandBatch& commandBatch) {}
+
+    Counters GetCounters() const
+    {
+        return mCounters;
+    }
 
 protected:
     CommandProcessors mNextCommandProcessors;
+    Counters mCounters;
 };
+
+static std::string Join(const std::vector<Command>& v)
+{
+    std::stringstream ss;
+    for(size_t i = 0; i < v.size(); ++i)
+    {
+        if(i != 0)
+            ss << ", ";
+        ss << v[i].mText;
+    }
+    return ss.str();
+}
 
 template <typename Processor>
 class ThreadedCommandProcessor : public CommandProcessor
@@ -57,25 +96,16 @@ public:
 
     ~ThreadedCommandProcessor()
     {
-        std::cout << "Thread: " << mName << ", block counter: " << mBlockCounter << ", command counter: " << mCommandCounter << std::endl;
+        std::cout << "Thread: " << mName << ", blocks: " << mCounters.mBlockCounter << ", commands: " << mCounters.mCommandCounter << std::endl;
     }
 
-    void StartBlock() override
-    {
-        ++mBlockCounter;
-    }
-
-    void FinishBlock() override
-    {
-        --mBlockCounter;
-    }
-
-    void ProcessCommand(const Command& command) override
+    void ProcessBatch(const CommandBatch& commandBatch) override
     {
         {
             std::lock_guard<std::mutex> lk(mMutex);
-            mQueue.push(command);
-            ++mCommandCounter;
+            std::string output = "bulk: " + Join(commandBatch.mCommands);
+            mCounters.mCommandCounter += commandBatch.Size();
+            mQueue.push({output, commandBatch.mTimestamp});
         }
         mCond.notify_one();
     }
@@ -94,8 +124,6 @@ public:
     }
 
 private:
-    int mBlockCounter{0};
-    int mCommandCounter{0};
     std::queue<Command> mQueue;
     std::condition_variable mCond;
     std::mutex mMutex;
@@ -127,6 +155,7 @@ private:
                 mQueue.pop();
                 lk.unlock();
                 mInternalProcessor.ProcessCommand(command);
+                ++mCounters.mBlockCounter;
 #ifdef DEBUG_PRINT
                 std::cout << "Thread " << mName << ": after process command." << std::endl;
 #endif                
@@ -145,35 +174,32 @@ public:
 
     ~ConsoleInput()
     {
-        std::cout << "Thread: main, block counter: " << mBlockCounter << ", command counter: " << mCommandCounter << ", line counter: " << mLineCounter << std::endl;
     }
 
     void ProcessCommand(const Command& command) override
     {
-        ++mLineCounter;
+        ++mCounters.mLineCounter;
+
         if (!mNextCommandProcessors.empty())
         {
-            if (command.Text == "{")
+            if (command.mText == "{")
             {
                 if (++mBlockDepth > 0)
                 {
-                    ++mBlockCounter;
                     for (auto nextCommandProcessor : mNextCommandProcessors)
                         nextCommandProcessor->StartBlock();
                 }
             }
-            else if (command.Text == "}")
+            else if (command.mText == "}")
             {
                 if (--mBlockDepth == 0)
                 {
-                    --mBlockCounter;
                     for (auto nextCommandProcessor : mNextCommandProcessors)
                         nextCommandProcessor->FinishBlock();
                 }
             }
             else
             {
-                ++mCommandCounter;
                 for (auto nextCommandProcessor : mNextCommandProcessors)
                     nextCommandProcessor->ProcessCommand(command);
             }
@@ -181,9 +207,6 @@ public:
     }
 
 private:
-    int mLineCounter{0};
-    int mBlockCounter{0};
-    int mCommandCounter{0};
     int mBlockDepth{0};
 };
 
@@ -196,7 +219,7 @@ public:
 
     void ProcessCommand(const Command& command) override
     {
-        std::cout << command.Text << std::endl;
+        std::cout << command.mText << std::endl;
     }
 };
 
@@ -211,14 +234,14 @@ public:
     void ProcessCommand(const Command& command) override
     {
         std::ofstream file(GetFilename(command), std::ofstream::out);
-        file << command.Text;
+        file << command.mText;
     }
 
 private:
     std::string GetFilename(const Command& command)
     {
         auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
-        command.Timestamp.time_since_epoch()).count();
+        command.mTimestamp.time_since_epoch()).count();
         std::stringstream filename;
         filename << mFilePrefix << "bulk" << seconds << ".log";
         return filename.str();
@@ -257,6 +280,7 @@ public:
 
     void ProcessCommand(const Command& command) override
     {
+        ++mCounters.mCommandCounter;
         mCommandBatch.push_back(command);
 
         if (!mBlockForced && mCommandBatch.size() >= mBulkSize)
@@ -272,25 +296,16 @@ private:
 
     void DumpBatch()
     {
+        if (mCommandBatch.empty())
+            return;
         for (auto nextCommandProcessor : mNextCommandProcessors)
         {
-            std::string output = "bulk: " + Join(mCommandBatch);
-            nextCommandProcessor->ProcessCommand(Command{output, mCommandBatch[0].Timestamp});
+            nextCommandProcessor->ProcessBatch({mCommandBatch, mCommandBatch[0].mTimestamp});
         }
         ClearBatch();
+        ++mCounters.mBlockCounter;
     }
 
-    static std::string Join(const std::vector<Command>& v)
-    {
-        std::stringstream ss;
-        for(size_t i = 0; i < v.size(); ++i)
-        {
-            if(i != 0)
-                ss << ", ";
-            ss << v[i].Text;
-        }
-        return ss.str();
-    }
     int mBulkSize;
     bool mBlockForced;
     std::vector<Command> mCommandBatch;
@@ -306,10 +321,18 @@ void RunBulk(int bulkSize)
     ConsoleInput consoleInput({batchCommandProcessor});
     std::string text;
     while (std::getline(std::cin, text))
+    {
         consoleInput.ProcessCommand(Command{text, std::chrono::system_clock::now()});
+    }
     reportWriter1->Stop();
     reportWriter2->Stop();
     consoleOutput->Stop();
+
+    Counters consoleCounters = consoleInput.GetCounters();
+    Counters batchCounters = batchCommandProcessor->GetCounters();
+
+    std::cout << "Thread: main, blocks: " << batchCounters.mBlockCounter << 
+        ", commands: " << batchCounters.mCommandCounter << ", lines: " << consoleCounters.mLineCounter << std::endl;
 }
 
 int main(int argc, char const** argv)
