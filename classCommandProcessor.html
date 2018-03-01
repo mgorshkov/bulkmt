@@ -84,7 +84,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
-<a href="#pro-static-attribs">Static Protected Attributes</a> &#124;
 <a href="classCommandProcessor-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">CommandProcessor Class Reference</div>  </div>
@@ -109,8 +108,6 @@ Collaboration diagram for CommandProcessor:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ae45aadaccb0732159eb2186e785110e9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#ae45aadaccb0732159eb2186e785110e9">CommandProcessor</a> (const std::string &amp;aName, const <a class="el" href="bulkmt_8cpp.html#a9cf347a754bf63f614ac03897127ab92">CommandProcessors</a> &amp;dependentCommandProcessors=<a class="el" href="bulkmt_8cpp.html#a9cf347a754bf63f614ac03897127ab92">CommandProcessors</a>())</td></tr>
 <tr class="separator:ae45aadaccb0732159eb2186e785110e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8b975af12657aab33323c1b6c5bb2961"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#a8b975af12657aab33323c1b6c5bb2961">~CommandProcessor</a> ()</td></tr>
-<tr class="separator:a8b975af12657aab33323c1b6c5bb2961"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3b53d8fa34f1c577578cc6bddfdfb72"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#ab3b53d8fa34f1c577578cc6bddfdfb72">StartBlock</a> () override</td></tr>
 <tr class="separator:ab3b53d8fa34f1c577578cc6bddfdfb72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc8b645095530ed5eff11740d9dc644d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#acc8b645095530ed5eff11740d9dc644d">FinishBlock</a> () override</td></tr>
@@ -133,11 +130,8 @@ Public Member Functions</h2></td></tr>
 Protected Attributes</h2></td></tr>
 <tr class="memitem:afa664dd1784fb154e3564ebbb2f0f885"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#afa664dd1784fb154e3564ebbb2f0f885">mName</a></td></tr>
 <tr class="separator:afa664dd1784fb154e3564ebbb2f0f885"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-attribs"></a>
-Static Protected Attributes</h2></td></tr>
-<tr class="memitem:a253df32e0064e9eb146928703db6c591"><td class="memItemLeft" align="right" valign="top">static thread_local <a class="el" href="structCounters.html">Counters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#a253df32e0064e9eb146928703db6c591">mCounters</a></td></tr>
-<tr class="separator:a253df32e0064e9eb146928703db6c591"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5d865a0e3f2377f71c3c56b16df4d58"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structCounters.html">Counters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCommandProcessor.html#ae5d865a0e3f2377f71c3c56b16df4d58">mCounters</a></td></tr>
+<tr class="separator:ae5d865a0e3f2377f71c3c56b16df4d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ae45aadaccb0732159eb2186e785110e9"></a>
@@ -174,29 +168,6 @@ Static Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a8b975af12657aab33323c1b6c5bb2961"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">CommandProcessor::~CommandProcessor </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="afcd197cd2f0c20aaf34dbb8012963452"></a>
 <div class="memitem">
@@ -220,6 +191,8 @@ Static Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classICommandProcessor.html#a40d022f16c9b42d45e6bbce2cf75d807">ICommandProcessor</a>.</p>
+
+<p>Reimplemented in <a class="el" href="classConsoleInput.html#a36c008b6934d0aa5290d09b036caede1">ConsoleInput</a>, and <a class="el" href="classThreadedCommandProcessor.html#adab3dbb5c727a4cf59be8dea462b2b6d">ThreadedCommandProcessor&lt; DependentProcessor &gt;</a>.</p>
 
 </div>
 </div>
@@ -389,7 +362,7 @@ Static Protected Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="a253df32e0064e9eb146928703db6c591"></a>
+<a class="anchor" id="ae5d865a0e3f2377f71c3c56b16df4d58"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -397,12 +370,12 @@ Static Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">thread_local <a class="el" href="structCounters.html">Counters</a> CommandProcessor::mCounters</td>
+          <td class="memname"><a class="el" href="structCounters.html">Counters</a> CommandProcessor::mCounters</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
