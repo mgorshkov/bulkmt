@@ -1,0 +1,8 @@
+<map id="ICommandProcessor" name="ICommandProcessor">
+<area shape="rect" id="node2" href="$classCommandProcessor.html" title="CommandProcessor" alt="" coords="200,107,341,133"/>
+<area shape="rect" id="node3" href="$classBatchCommandProcessor.html" title="BatchCommandProcessor" alt="" coords="399,5,574,32"/>
+<area shape="rect" id="node4" href="$classConsoleInput.html" title="ConsoleInput" alt="" coords="437,56,536,83"/>
+<area shape="rect" id="node5" href="$classConsoleOutput.html" title="ConsoleOutput" alt="" coords="432,107,541,133"/>
+<area shape="rect" id="node6" href="$classReportWriter.html" title="ReportWriter" alt="" coords="439,157,535,184"/>
+<area shape="rect" id="node7" href="$classThreadedCommandProcessor.html" title="Starts one thread for each dependent CommandProcessor. " alt="" coords="389,209,584,250"/>
+</map>
