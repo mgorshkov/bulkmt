@@ -70,10 +70,6 @@ public:
     {
     }
 
-    ~CommandProcessor()
-    {
-    }
-
     void StartBlock() override
     {
         for (auto dependentCommandProcessor : mDependentCommandProcessors)
@@ -125,18 +121,21 @@ public:
     void DumpCounters() const override
     {
         std::cout << "Thread: " << mName << ", blocks: " << mCounters.mBlockCounter <<
-            ", commands: " << mCounters.mCommandCounter << ", lines: " << mCounters.mLineCounter << std::endl;
+            ", commands: " << mCounters.mCommandCounter;
+
+        if (mCounters.mLineCounter != 0)
+            std::cout << ", lines: " << mCounters.mLineCounter;
+
+        std::cout << std::endl;
     }
 
 protected:
     std::string mName;
-    thread_local static Counters mCounters;
+    Counters mCounters;
 
 private:
     CommandProcessors mDependentCommandProcessors;
 };
-
-thread_local Counters CommandProcessor::mCounters;
 
 static std::string Join(const std::vector<Command>& v)
 {
@@ -173,10 +172,6 @@ public:
         }
     }
 
-    ~ThreadedCommandProcessor()
-    {
-    }
-
     void ProcessBatch(const CommandBatch& commandBatch) override
     {
         if (mDone)
@@ -197,6 +192,8 @@ public:
             thread.join();
         CommandProcessor::Stop();
     }
+
+    void DumpCounters() const override {}
 
 private:
     static void ThreadProc(ThreadedCommandProcessor* aProcessor, const std::string& aName)
@@ -252,10 +249,6 @@ public:
         assert(dependentCommandProcessors.size() != 0);
     }
 
-    ~ConsoleInput()
-    {
-    }
-
     void ProcessLine(const std::string& line) override
     {
         if (line == "{")
@@ -279,6 +272,8 @@ public:
         }
         CommandProcessor::ProcessLine(line);
     }
+
+    void DumpCounters() const override {}
 
 private:
     int mBlockDepth{0};
@@ -311,10 +306,6 @@ class ReportWriter : public CommandProcessor
 public:
     ReportWriter(const std::string& aName)
         : CommandProcessor(aName)
-    {
-    }
-
-    ~ReportWriter()
     {
     }
 
@@ -380,6 +371,7 @@ public:
             DumpBatch();
         CommandProcessor::Stop();
     }
+
 private:
     void ClearBatch()
     {
