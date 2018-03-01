@@ -211,6 +211,10 @@ private:
                     });
                 aProcessor->ProcessQueue(lk, dependentProcessor);
             }
+            {
+                std::unique_lock<std::mutex> lk(aProcessor->mQueueMutex);
+                aProcessor->ProcessQueue(lk, dependentProcessor);
+            }
             dependentProcessor.Stop();
         }
         catch (const std::exception &e)
@@ -402,9 +406,7 @@ void RunBulk(int bulkSize)
     CommandProcessors batchCommandProcessors = {batchCommandProcessor};
     ConsoleInput consoleInput(batchCommandProcessors);
     std::string line;
-    std::fstream stream("/home/mgorshkov/Work/bulkmt/CMakeCache.txt");
-    //while (std::getline(std::cin, line))
-    while (std::getline(stream, line))
+    while (std::getline(std::cin, line))
     {
         consoleInput.ProcessLine(line);
     }
