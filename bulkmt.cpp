@@ -257,7 +257,7 @@ public:
     {
         if (line == "{")
         {
-            if (++mBlockDepth > 0)
+            if (mBlockDepth++ == 0)
             {
                 CommandProcessor::StartBlock();
             }
