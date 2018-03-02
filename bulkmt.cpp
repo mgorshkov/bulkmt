@@ -12,6 +12,20 @@
 #include <atomic>
 #include <assert.h>
 
+//#define EXPERIMENT_PART1
+//#define EXPERIMENT_PART2
+
+#ifdef EXPERIMENT_PART1
+#include <numeric>
+#include <algorithm>
+#endif
+
+#ifdef EXPERIMENT_PART2
+#define THREADS 20
+#else
+#define THREADS 2
+#endif
+
 /**
  * @brief Multithreaded batch command processor.
  */
@@ -321,6 +335,13 @@ public:
         file << command.mText << std::endl;
 
         CommandProcessor::ProcessBatch(commandBatch);
+
+#ifdef EXPERIMENT_PART1
+        std::vector<int> v(1000);
+        std::iota(v.begin(), v.end(), 0);
+        for (int i = 0; i < 1000000; ++i)
+            std::random_shuffle(v.begin(), v.end());
+#endif
     }
 
 private:
@@ -398,7 +419,7 @@ private:
 
 void RunBulk(int bulkSize)
 {
-    auto reportWritersThreadedProcessor = std::make_shared<ThreadedCommandProcessor<ReportWriter>>("file", 2);
+    auto reportWritersThreadedProcessor = std::make_shared<ThreadedCommandProcessor<ReportWriter>>("file", THREADS);
     auto consoleOutputThreadedProcessor = std::make_shared<ThreadedCommandProcessor<ConsoleOutput>>("log");
 
     CommandProcessors processors = {reportWritersThreadedProcessor, consoleOutputThreadedProcessor};
